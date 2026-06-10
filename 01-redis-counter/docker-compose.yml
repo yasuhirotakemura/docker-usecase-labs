@@ -1,0 +1,30 @@
+services:
+  app:
+    container_name: redis-counter-flask-app
+    build: ./app
+    ports:
+      - ${APP_PORT:-8080}:8000
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      redis:
+        condition: service_healthy # redisが正常に起動するまで待機する
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s # 5秒ごとにチェック
+      timeout: 3s # 3秒でタイムアウト
+      retries: 5 # 5回失敗したら異常とみなす
+  redis:
+    container_name: redis-counter-redis
+    image: redis:8.6.4
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"] # redis-cliを使ってpingを送り、反応があるか確かめる
+      interval: 5s # 5秒ごとにチェック
+      timeout: 3s # 3秒でタイムアウト
+      retries: 5 # 5回失敗したら異常とみなす
+    volumes:
+      - redis-data:/data
+volumes:
+  redis-data:
+    driver: local
