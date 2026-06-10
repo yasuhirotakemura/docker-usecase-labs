@@ -1,0 +1,53 @@
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - "${NGINX_PORT}:80"
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - frontend
+  app:
+    build: ./app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - frontend
+      - backend
+  redis:
+    image: redis:8.6.4-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    volumes:
+      - redis-data:/data
+    networks:
+      - backend
+volumes:
+  redis-data:
+    driver: local
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
