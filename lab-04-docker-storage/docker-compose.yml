@@ -1,0 +1,18 @@
+services:
+  writer:
+    image: alpine:3.22
+    command: "sleep infinity"
+    volumes:
+      - storage-data:/volume-data
+      - ./host-data:/bind-data
+      - ./config:/config:ro
+    tmpfs:
+      - /tmp-data
+  reader:
+    image: alpine:3.22
+    command: "sleep infinity"
+    volumes:
+      - storage-data:/shared-data:ro
+volumes:
+  storage-data:
+    driver: local
