@@ -1,0 +1,51 @@
+services:
+  client:
+    build: ./tools
+    command: "sleep infinity"
+    networks:
+      - frontend
+  public-web:
+    build: ./tools
+    command:
+      - sh
+      - -c
+      - |
+        mkdir -p /www
+        echo 'hello-from-public-web' > /www/index.html
+        exec httpd -f -p 8000 -h /www
+    ports:
+      - "${PUBLIC_WEB_PORT:-8080}:8000"
+    networks:
+      - frontend
+      - backend
+  app:
+    build: ./tools
+    command:
+      - sh
+      - -c
+      - |
+        mkdir -p /www
+        echo 'hello-from-app' > /www/index.html
+        exec httpd -f -p 8000 -h /www
+    expose:
+      - 8000
+    networks:
+      backend:
+        aliases:
+          - internal-api
+      data: {}
+  redis:
+    image: redis:8.6.4-alpine
+    networks:
+      - data
+networks:
+  frontend:
+    name: lab05-frontend
+    driver: bridge
+  backend:
+    name: lab05-backend
+    driver: bridge
+  data:
+    name: lab05-data
+    driver: bridge
+    internal: true
